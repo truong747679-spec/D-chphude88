@@ -2,98 +2,226 @@
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
-    <title>Tool Phụ Đề Nâng Cao & Tải</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trình Phát Video Phụ Đề</title>
     <style>
-        body { font-family: sans-serif; background: #0f172a; color: #fff; padding: 10px; }
-        .card { background: #1e293b; padding: 15px; border-radius: 12px; }
-        textarea { width: 100%; height: 80px; background: #0f172a; color: #fff; border: 1px solid #475569; padding: 8px; box-sizing: border-box; }
-        .control-group { margin-top: 10px; display: grid; gap: 5px; }
-        .slider-row { display: flex; align-items: center; justify-content: space-between; font-size: 13px; }
-        input[type="range"] { width: 50%; }
-        button { padding: 10px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; margin-top: 5px; }
-        #player-box { position: relative; width: 100%; margin-top: 20px; }
-        video { width: 100%; border-radius: 8px; }
-        #overlay { 
-            position: absolute; bottom: 10%; left: 50%; transform: translateX(-50%);
-            display: flex; align-items: center; justify-content: center;
-            backdrop-filter: blur(8px) brightness(0.6); 
-            border-radius: 8px; text-align: center; overflow: hidden; pointer-events: none;
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
         }
-        #text-content { padding: 5px; font-weight: bold; text-shadow: 0 1px 3px black; }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #0f172a;
+            color: #f8fafc;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 900px;
+            background-color: #1e293b;
+            padding: 24px;
+            border-radius: 16px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+        }
+
+        h1 {
+            text-align: center;
+            font-size: 24px;
+            margin-bottom: 20px;
+            color: #38bdf8;
+        }
+
+        .upload-section {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 20px;
+        }
+
+        .file-label {
+            background-color: #0284c7;
+            color: white;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: background-color 0.2s ease;
+        }
+
+        .file-label:hover {
+            background-color: #0369a1;
+        }
+
+        input[type="file"] {
+            display: none;
+        }
+
+        .video-container {
+            position: relative;
+            width: 100%;
+            background-color: #000;
+            border-radius: 12px;
+            overflow: hidden;
+            aspect-ratio: 16 / 9;
+        }
+
+        video {
+            width: 100%;
+            height: 100%;
+            display: block;
+            object-fit: contain;
+        }
+
+        .subtitle-box {
+            position: absolute;
+            bottom: 12%;
+            left: 5%;
+            right: 5%;
+            text-align: center;
+            pointer-events: none;
+            transition: opacity 0.15s ease-in-out;
+            opacity: 0;
+        }
+
+        .subtitle-text {
+            display: inline-block;
+            background-color: rgba(0, 0, 0, 0.75);
+            color: #ffffff;
+            font-size: 18px;
+            font-weight: 600;
+            line-height: 1.4;
+            padding: 8px 16px;
+            border-radius: 6px;
+            text-shadow: 1px 1px 2px #000;
+        }
+
+        @media (max-width: 640px) {
+            .subtitle-text {
+                font-size: 14px;
+                padding: 6px 10px;
+            }
+        }
     </style>
 </head>
 <body>
 
-<div class="card">
-    <textarea id="rawText" placeholder="Dán văn bản (VD: 0:02 Chào bạn)"></textarea>
-    <input type="file" id="vidInput" accept="video/*" style="margin: 10px 0;">
-    <button onclick="init()" style="background: #2563eb; color:white; width:100%;">TẢI DỮ LIỆU</button>
+<div class="container">
+    <h1>Trình Phát Video & Phụ Đề</h1>
+    
+    <div class="upload-section">
+        <label for="videoFile" class="file-label">📂 Chọn Video Từ Máy</label>
+        <input type="file" id="videoFile" accept="video/*">
+    </div>
 
-    <div class="control-group">
-        <div class="slider-row"><span>Sync:</span> <button onclick="sync(-0.2)">-0.2s</button><span id="syncVal">0s</span><button onclick="sync(0.2)">+0.2s</button></div>
-        <div class="slider-row"><span>Cỡ chữ:</span> <input type="range" id="fSize" min="10" max="50" value="20" oninput="updateStyles()"></div>
-        <div class="slider-row"><span>Chiều rộng:</span> <input type="range" id="wSize" min="20" max="100" value="80" oninput="updateStyles()"></div>
-        <div class="slider-row"><span>Chiều cao:</span> <input type="range" id="hSize" min="30" max="150" value="60" oninput="updateStyles()"></div>
-        <button id="recBtn" onclick="toggleRec()" style="background: #dc2626; color: white; margin-top:10px;">BẮT ĐẦU QUAY & TẢI</button>
+    <div class="video-container">
+        <video id="videoPlayer" controls>
+            Trình duyệt của bạn không hỗ trợ phát video.
+        </video>
+        <div id="subtitleBox" class="subtitle-box">
+            <span id="subtitleText" class="subtitle-text"></span>
+        </div>
     </div>
 </div>
 
-<div id="player-box">
-    <video id="vid" controls></video>
-    <div id="overlay"><div id="text-content"></div></div>
-</div>
-
 <script>
-    let subs = [], offset = 0, mediaRecorder, chunks = [];
-    const vid = document.getElementById('vid'), overlay = document.getElementById('overlay'), txt = document.getElementById('text-content');
+    // Danh sách dữ liệu phụ đề (mốc giây & câu thoại)
+    const subtitles = [
+        { time: 0, text: "Cả thế giới đều biết bạn 10 ngày sau sẽ trở thành Siêu Nhân." },
+        { time: 1, text: "Thông báo: Hủy bỏ tất cả năng lực của kẻ trốn chạy, đồng thời cập nhật vị trí định vị không định kỳ." },
+        { time: 2, text: "Hình như chúng ta xong đời rồi..." },
+        { time: 4, text: "Phù chú của chúng ta thực sự không dùng được nữa rồi." },
+        { time: 7, text: "Chúng ta bị cái thông báo này hại rồi." },
+        { time: 9, text: "Thánh Chủ, tình hình này là sao đây?" },
+        { time: 12, text: "Rõ ràng là Thiên Đạo thấy ngươi cầm phù chú sống quá dễ dàng." },
+        { time: 16, text: "Theo tính nết của Thiên Đạo, Phù chú Chuột rất có thể đã rơi vào tay người khác." },
+        { time: 19, text: "Nếu ngươi sợ thì hãy giao thân thể cho ta, ta giúp ngươi, thấy thế nào?" },
+        { time: 22, text: "Giao cho ngươi rồi liệu ta có lấy lại được không... Ta đâu có ngu." },
+        { time: 24, text: "Việc này bắt đầu rồi sao..." },
+        { time: 28, text: "Tôi cũng muốn làm siêu nhân! Nó hết năng lực rồi, bắt lấy nó!" },
+        { time: 30, text: "Phải bắt bằng được nó! Rốt cuộc cũng có cơ hội khử nó rồi!" },
+        { time: 33, text: "Nó chắc chắn là chạy về hướng bên đó rồi, chúng ta phải nhanh chân hơn một bước!" },
+        { time: 36, text: "Cuối cùng cũng có thể khử tên nhóc này rồi." },
+        { time: 38, text: "Bên phía tôi không có." },
+        { time: 41, text: "Bên tôi cũng thế." },
+        { time: 43, text: "Người trong cả thành phố đều muốn khử tôi..." },
+        { time: 46, text: "Chẳng lẽ không có lấy một người tốt sao?" },
+        { time: 48, text: "Phải nghĩ cách ra khỏi thành phố thôi..." },
+        { time: 51, text: "Cậu đang chơi cái gì đấy?" },
+        { time: 53, text: "Tôi đang chơi Tam Quốc Sát." },
+        { time: 54, text: "Trời đất ơi, cậu đừng chơi nữa! Bên ngoài đang truy đuổi kìa, tim cậu to thật đấy!" },
+        { time: 61, text: "Anh ơi, bây giờ chúng ta phải làm sao đây?" },
+        { time: 63, text: "Đã đi đến bước này rồi... không thể bỏ cuộc được." },
+        { time: 67, text: "Anh ra ngoài giúp cậu ấy, em cứ ở đây chờ, đừng đi đâu cả." },
+        { time: 70, text: "Anh ơi, em cũng muốn đi!" },
+        { time: 72, text: "Em đừng bướng nữa! Chúng ta bắt buộc phải có một người ở lại." },
+        { time: 75, text: "Chưa đến lúc tuyệt vọng đâu, em không cần lo, tay nghề của anh tốt lắm." },
+        { time: 78, text: "Anh ơi... Hỏa Hỏa... Hai người đừng xảy ra chuyện gì nhé!" },
+        { time: 83, text: "Nên phá giải thế cờ này thế nào đây..." },
+        { time: 86, text: "Chúng ta phải làm sao đây, bây giờ hoàn toàn không thấy hy vọng đâu nữa." },
+        { time: 87, text: "Cái đồ ngốc này..." },
+        { time: 90, text: "Sao ngươi vẫn nhát gan như thế?" },
+        { time: 93, text: "Nhưng mà bây giờ thực sự rất tuyệt vọng..." },
+        { time: 96, text: "Chưa đến lúc tuyệt vọng đâu." },
+        { time: 98, text: "Ý ngươi là ngươi có cách?" },
+        { time: 100, text: "Ngươi đã từng suy ngẫm kỹ câu nói này chưa: \"Khử hắn đi có thể thay thế hắn trở thành Siêu Nhân\"." },
+        { time: 104, text: "Bất kỳ ai khử chúng ta đều có thể thay thế chúng ta trở thành Thần." },
+        { time: 107, text: "Vậy nếu như người khử chúng ta lại chính là chúng ta thì sao?" },
+        { time: 110, text: "Đừng nói là hiệnatai chúng ta chưa bị bắt, cho dù có bị bắt thì cũng không cần phải tuyệt vọng." },
+        { time: 113, text: "Phấn chấn lên đi!" },
+        { time: 116, text: "Nói đúng lắm, phải phấn chấn lên..." },
+        { time: 118, text: "Tiếp tục tiến lên thôi. Kiểm tra ngươi một chút, đến ngày mai chúng ta phải làm gì?" },
+        { time: 123, text: "Tên nào đuổi theo khử chúng ta, không để sót một ai, khử sạch toàn bộ!" },
+        { time: 124, text: "Trả lời chính xác." },
+        { time: 127, text: "Mặc dù Phù chú Hổ đã bị phong ấn, nhưng tác dụng phụ của việc phân tách vẫn còn sao..." },
+        { time: 130, text: "Đây không phải là bệnh tâm thần à? Đáng sợ quá, suốt ngày tự ngôn tự ngữ." },
+        { time: 133, text: "Phải nhanh chóng tìm thấy cậu ấy... Mình phải giúp cậu ấy." },
+        { time: 136, text: "Làm như vậy thực sự đúng sao?" },
+        { time: 137, text: "Nên làm như vậy, đừng có nhu nhược như thế!" }
+    ];
 
-    function init() {
-        vid.src = URL.createObjectURL(document.getElementById('vidInput').files[0]);
-        subs = document.getElementById('rawText').value.split('\n').map(l => {
-            const m = l.match(/(\d+):(\d+)/);
-            if(!m) return null;
-            return { time: (parseInt(m[1])*60) + parseInt(m[2]), text: l.replace(m[0], '').trim() };
-        }).filter(s => s);
-        updateStyles();
-    }
+    const videoPlayer = document.getElementById('videoPlayer');
+    const subtitleBox = document.getElementById('subtitleBox');
+    const subtitleText = document.getElementById('subtitleText');
+    const videoFileInput = document.getElementById('videoFile');
 
-    function sync(val) { offset += val; document.getElementById('syncVal').innerText = offset.toFixed(1) + 's'; }
-
-    function updateStyles() {
-        txt.style.fontSize = document.getElementById('fSize').value + 'px';
-        overlay.style.width = document.getElementById('wSize').value + '%';
-        overlay.style.height = document.getElementById('hSize').value + 'px';
-    }
-
-    vid.ontimeupdate = () => {
-        let cur = vid.currentTime - offset;
-        let s = subs.find((sub, i) => cur >= sub.time && (subs[i+1] ? cur < subs[i+1].time : true));
-        txt.innerText = s ? s.text : "";
-        overlay.style.opacity = s ? "1" : "0";
-    };
-
-    function toggleRec() {
-        if (!mediaRecorder || mediaRecorder.state === 'inactive') {
-            chunks = [];
-            const stream = vid.captureStream(30);
-            mediaRecorder = new MediaRecorder(stream);
-            mediaRecorder.ondataavailable = e => chunks.push(e.data);
-            mediaRecorder.onstop = () => {
-                const blob = new Blob(chunks, {type: 'video/webm'});
-                const a = document.createElement('a');
-                a.href = URL.createObjectURL(blob);
-                a.download = 'video_phu_de.webm';
-                a.click();
-            };
-            mediaRecorder.start();
-            vid.play();
-            document.getElementById('recBtn').innerText = "ĐANG QUAY... (BẤM DỪNG)";
-        } else {
-            mediaRecorder.stop();
-            document.getElementById('recBtn').innerText = "BẮT ĐẦU QUAY & TẢI";
+    // Tải file từ máy lên
+    videoFileInput.addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (file) {
+            videoPlayer.src = URL.createObjectURL(file);
+            videoPlayer.play();
         }
-    }
+    });
+
+    // Lắng nghe thời gian phát video để bật/tắt phụ đề
+    videoPlayer.addEventListener('timeupdate', () => {
+        const currentTime = videoPlayer.currentTime;
+        let matchText = "";
+
+        for (let i = 0; i < subtitles.length; i++) {
+            const startTime = subtitles[i].time;
+            const endTime = (i < subtitles.length - 1) ? subtitles[i + 1].time : Infinity;
+
+            if (currentTime >= startTime && currentTime < endTime) {
+                matchText = subtitles[i].text;
+                break;
+            }
+        }
+
+        if (matchText) {
+            subtitleText.innerText = matchText;
+            subtitleBox.style.opacity = "1";
+        } else {
+            subtitleBox.style.opacity = "0";
+        }
+    });
 </script>
+
 </body>
 </html>
-
