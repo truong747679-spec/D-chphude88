@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <title>Tool Phụ Đề Nâng Cao & Tải</title>
+    <style>
+        body { font-family: sans-serif; background: #0f172a; color: #fff; padding: 10px; }
+        .card { background: #1e293b; padding: 15px; border-radius: 12px; }
+        textarea { width: 100%; height: 80px; background: #0f172a; color: #fff; border: 1px solid #475569; padding: 8px; box-sizing: border-box; }
+        .control-group { margin-top: 10px; display: grid; gap: 5px; }
+        .slider-row { display: flex; align-items: center; justify-content: space-between; font-size: 13px; }
+        input[type="range"] { width: 50%; }
+        button { padding: 10px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; margin-top: 5px; }
+        #player-box { position: relative; width: 100%; margin-top: 20px; }
+        video { width: 100%; border-radius: 8px; }
+        #overlay { 
+            position: absolute; bottom: 10%; left: 50%; transform: translateX(-50%);
+            display: flex; align-items: center; justify-content: center;
+            backdrop-filter: blur(8px) brightness(0.6); 
+            border-radius: 8px; text-align: center; overflow: hidden; pointer-events: none;
+        }
+        #text-content { padding: 5px; font-weight: bold; text-shadow: 0 1px 3px black; }
+    </style>
+</head>
+<body>
+
+<div class="card">
+    <textarea id="rawText" placeholder="Dán văn bản (VD: 0:02 Chào bạn)"></textarea>
+    <input type="file" id="vidInput" accept="video/*" style="margin: 10px 0;">
+    <button onclick="init()" style="background: #2563eb; color:white; width:100%;">TẢI DỮ LIỆU</button>
+
+    <div class="control-group">
+        <div class="slider-row"><span>Sync:</span> <button onclick="sync(-0.2)">-0.2s</button><span id="syncVal">0s</span><button onclick="sync(0.2)">+0.2s</button></div>
+        <div class="slider-row"><span>Cỡ chữ:</span> <input type="range" id="fSize" min="10" max="50" value="20" oninput="updateStyles()"></div>
+        <div class="slider-row"><span>Chiều rộng:</span> <input type="range" id="wSize" min="20" max="100" value="80" oninput="updateStyles()"></div>
+        <div class="slider-row"><span>Chiều cao:</span> <input type="range" id="hSize" min="30" max="150" value="60" oninput="updateStyles()"></div>
+        <button id="recBtn" onclick="toggleRec()" style="background: #dc2626; color: white; margin-top:10px;">BẮT ĐẦU QUAY & TẢI</button>
+    </div>
+</div>
+
+<div id="player-box">
+    <video id="vid" controls></video>
+    <div id="overlay"><div id="text-content"></div></div>
+</div>
+
+<script>
+    let subs = [], offset = 0, mediaRecorder, chunks = [];
+    const vid = document.getElementById('vid'), overlay = document.getElementById('overlay'), txt = document.getElementById('text-content');
+
+    function init() {
+        vid.src = URL.createObjectURL(document.getElementById('vidInput').files[0]);
+        subs = document.getElementById('rawText').value.split('\n').map(l => {
+            const m = l.match(/(\d+):(\d+)/);
+            if(!m) return null;
+            return { time: (parseInt(m[1])*60) + parseInt(m[2]), text: l.replace(m[0], '').trim() };
+        }).filter(s => s);
+        updateStyles();
+    }
+
+    function sync(val) { offset += val; document.getElementById('syncVal').innerText = offset.toFixed(1) + 's'; }
+
+    function updateStyles() {
+        txt.style.fontSize = document.getElementById('fSize').value + 'px';
+        overlay.style.width = document.getElementById('wSize').value + '%';
+        overlay.style.height = document.getElementById('hSize').value + 'px';
+    }
+
+    vid.ontimeupdate = () => {
+        let cur = vid.currentTime - offset;
+        let s = subs.find((sub, i) => cur >= sub.time && (subs[i+1] ? cur < subs[i+1].time : true));
+        txt.innerText = s ? s.text : "";
+        overlay.style.opacity = s ? "1" : "0";
+    };
+
+    function toggleRec() {
+        if (!mediaRecorder || mediaRecorder.state === 'inactive') {
+            chunks = [];
+            const stream = vid.captureStream(30);
+            mediaRecorder = new MediaRecorder(stream);
+            mediaRecorder.ondataavailable = e => chunks.push(e.data);
+            mediaRecorder.onstop = () => {
+                const blob = new Blob(chunks, {type: 'video/webm'});
+                const a = document.createElement('a');
+                a.href = URL.createObjectURL(blob);
+                a.download = 'video_phu_de.webm';
+                a.click();
+            };
+            mediaRecorder.start();
+            vid.play();
+            document.getElementById('recBtn').innerText = "ĐANG QUAY... (BẤM DỪNG)";
+        } else {
+            mediaRecorder.stop();
+            document.getElementById('recBtn').innerText = "BẮT ĐẦU QUAY & TẢI";
+        }
+    }
+</script>
+</body>
+</html>
+
